@@ -4,14 +4,18 @@ import numpy as np
 import sys
 import psycopg2
 from psycopg2.extensions import AsIs
-
+import traceback
+import csv
 
 def write_to_db(data):
     try:
-        conn = psycopg2.connect("dbname='fantasyfootball' user='tylerfolkman'")
-        print("Connected to fantasy football database!")
-    except:
-        print "I am unable to connect to the database."
+        conn = psycopg2.connect("dbname='test_db' user='bogdan'")
+    except psycopg2.Error as e:
+        print "I am unable to connect to the database"
+        print e
+        print e.pgcode
+        print e.pgerror
+        print traceback.format_exc()
     cur = conn.cursor()
     for player in data:
         columns = player.keys()
@@ -45,10 +49,14 @@ def generate_all_urls(season, week, n_pages, page_size=50):
 
 def get_data_from_source(source, season, week):
     table = []
-    for tr in source.find_all('tr')[3:]:
-        tds = tr.find_all('td')
+    csvfile = open('test.csv','a')
+    fieldnames= ['name','team','position','season','week','opponent','at_home',
+                 'won_game']
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames, extrasaction='ignore')
+    for tr in source.find_all('tr')[3:]: # looking for rows in a table; probably skipping to the third row; source is probably something returned from BeautifulSoup
+        tds = tr.find_all('td') # finds individual cells and adds them to some list or array
 
-        player_dict = {}
+        player_dict = {}    # starting a blank dictionary
         try:
             player_info = tds[0].text.split(",")
             player_dict['name'] = player_info[0]
@@ -110,6 +118,9 @@ def get_data_from_source(source, season, week):
         player_dict['total_points'] = int(tds[23].text)
 
         table.append(player_dict)
+        writer.writerow(player_dict)
+        # print table
+    csvfile.close()
     return table
 
 
@@ -120,6 +131,7 @@ def main():
     all_urls = generate_all_urls(season, week, n_pages)
     all_tables = []
     for url in all_urls:
+        print url
         soup = get_source(url)
         table = get_data_from_source(soup, season, week)
         all_tables = all_tables + table
