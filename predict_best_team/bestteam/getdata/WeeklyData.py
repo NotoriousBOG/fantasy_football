@@ -35,7 +35,32 @@ def write_to_db(data):
 
 
 def get_source(url):
+    
+    username = 'notoriousbog'
+    password = 'TBD'
+    # a great password
+
+    passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
+    # this creates a password manager
+    passman.add_password(None, url, username, password)
+    # because we have put None at the start it will always
+    # use this username/password combination for  urls
+    # for which `url` is a super-url
+
+    authhandler = urllib2.HTTPBasicAuthHandler(passman)
+    # create the AuthHandler
+    
+    opener = urllib2.build_opener(authhandler)
+    
+    urllib2.install_opener(opener)
+    # All calls to urllib2.urlopen will now use our handler
+    # Make sure not to include the protocol in with the URL, or
+    # HTTPPasswordMgrWithDefaultRealm will be very confused.
+    # You must (of course) use it when fetching the page though.
+    
     data = urllib2.urlopen(url).read()
+    # authentication is now handled automatically for us
+    
     return BeautifulSoup(data, "html.parser")
 
 
@@ -43,22 +68,32 @@ def generate_all_urls(season, week, n_pages, page_size=50):
     start_values = np.arange(0, page_size * n_pages, page_size)
     all_urls = []
     for i in start_values:
-        all_urls.append("http://games.espn.go.com/ffl/leaders?&startIndex={1}&scoringPeriodId={2}&seasonId={0}&leagueId=335599"
+        all_urls.append("http://games.espn.go.com/ffl/leaders?&startIndex={1}&scoringPeriodId={2}&seasonId={0}"
                         .format(season, i, week))
     return all_urls
 
-
+csvfile = open('WeeklyLeaders.csv','a')
+fieldnames= ['name','team','position','season','week','opponent','at_home',
+                 'won_game','team_score','opponent_score','passing_completed',
+                 'passing_attempted','passing_yds','passing_td','passing_int',
+                 'rushing_attempts','rushing_yds','rushing_td',
+                 'receiving_receptions','receiving_yds','receiving_td','receiving_targets',
+                 'two_point_conv','fumbles','total_returned_tds','total_points']
+writer = csv.DictWriter(csvfile, fieldnames=fieldnames, extrasaction='ignore')
+writer.writeheader()  #because of the append method, currently it is written for every page it downloads
+csvfile.close()
+    
 def get_data_from_source(source, season, week):
     table = []
     csvfile = open('WeeklyLeaders.csv','a')
     fieldnames= ['name','team','position','season','week','opponent','at_home',
-                 'won_game','team_score','oponent_score','passing_completed',
+                 'won_game','team_score','opponent_score','passing_completed',
                  'passing_attempted','passing_yds','passing_td','passing_int',
                  'rushing_attempts','rushing_yds','rushing_td',
                  'receiving_receptions','receiving_yds','receiving_td','receiving_targets',
-                 'two_point_conv','fumbles','total_returned_tds','total_returned_tds']
+                 'two_point_conv','fumbles','total_returned_tds','total_points']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames, extrasaction='ignore')
-    # writer.writeheader()  #because of the append method, currently it is written for every page it downloads
+    #writer.writeheader()  #because of the append method, currently it is written for every page it downloads
     for tr in source.find_all('tr')[3:]: # looking for rows in a table; probably skipping to the third row; source is probably something returned from BeautifulSoup
         tds = tr.find_all('td') # finds individual cells and adds them to some list or array
 
