@@ -1,3 +1,6 @@
+# This reads the data here: http://games.espn.go.com/ffl/pointsagainst
+#Two arguments: season and number of pages to pull
+
 from bs4 import BeautifulSoup
 import urllib2
 import numpy as np
@@ -8,14 +11,15 @@ from psycopg2.extensions import AsIs
 
 def write_to_db(data, season):
     try:
-        conn = psycopg2.connect("dbname='fantasyfootball' user='tylerfolkman'")
+        conn = psycopg2.connect("dbname='test_db' user='bogdan'")
         print("Connected to fantasy football database!")
     except:
         print "I am unable to connect to the database."
     cur = conn.cursor()
-    cur.execute("""DELETE FROM points_against WHERE season = {0}""".format(str(season)))
+    #cur.execute("""DELETE FROM points_against WHERE season = {0}""".format(str(season)))
     for player in data:
         columns = player.keys()
+             
         values = [player[column] for column in columns]
         insert_statement = 'insert into points_against (%s) values %s'
 
@@ -26,7 +30,7 @@ def write_to_db(data, season):
 
 def get_source(url):
     data = urllib2.urlopen(url).read()
-    return BeautifulSoup(data)
+    return BeautifulSoup(data,"html.parser")
 
 
 def get_all_data(season):
@@ -53,12 +57,12 @@ def get_data_from_source(source, season, position):
 
         player_dict['season'] = season
 
-        if season == 2015:
+        if season == 2016:
 	    if tds[2].text == "** BYE **":
                 start_index = 4
 	    else:
 		start_index = 5
-        elif season == 2014:
+        elif season == 2015:
             start_index = 4
 
         # passing
