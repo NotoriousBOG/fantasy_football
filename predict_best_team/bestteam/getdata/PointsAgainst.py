@@ -16,7 +16,7 @@ def write_to_db(data, season):
     except:
         print "I am unable to connect to the database."
     cur = conn.cursor()
-    #cur.execute("""DELETE FROM points_against WHERE season = {0}""".format(str(season)))
+    cur.execute("""DELETE FROM points_against WHERE season = {0}""".format(str(season)))
     for player in data:
         columns = player.keys()
              
