@@ -1,20 +1,23 @@
+# python Projections.py YYYY W P; where YYYY is the year, W is the Week, and P is the number of Pages to pull.
 from bs4 import BeautifulSoup
 import urllib2
 import numpy as np
 import sys
 import psycopg2
 from psycopg2.extensions import AsIs
-
+import traceback
+import csv
 
 def write_to_db(data):
     try:
-        conn = psycopg2.connect("dbname='fantasyfootball' user='tylerfolkman'")
+        conn = psycopg2.connect("dbname='test_db' user='boaida'")
         print("Connected to fantasy football database!")
     except:
         print "I am unable to connect to the database."
     cur = conn.cursor()
     for player in data:
         columns = player.keys()
+        
         values = [player[column] for column in columns]
         insert_statement = 'insert into next_week_projections (%s) values %s'
 
@@ -31,7 +34,7 @@ def write_to_db(data):
 
 def get_source(url):
     data = urllib2.urlopen(url).read()
-    return BeautifulSoup(data)
+    return BeautifulSoup(data, "html.parser")
 
 
 def generate_all_urls(season, week, n_pages, page_size=40):
@@ -46,6 +49,16 @@ def generate_all_urls(season, week, n_pages, page_size=40):
 
 def get_data_from_source(source, season, week):
     table = []
+    
+    csvfile = open('Projections.csv','a')
+    fieldnames= ['name','team','position','season','week','opponent','at_home',
+                 'won_game','team_score','oponent_score','passing_completed',
+                 'passing_attempted','passing_yds','passing_td','passing_int',
+                 'rushing_attempts','rushing_yds','rushing_td',
+                 'receiving_receptions','receiving_yds','receiving_td','receiving_targets',
+                 'two_point_conv','fumbles','total_returned_tds','total_returned_tds']
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames, extrasaction='ignore')
+    
     for tr in source.find_all('tr')[3:]:
         tds = tr.find_all('td')
 
@@ -94,6 +107,9 @@ def get_data_from_source(source, season, week):
         player_dict['total_points'] = float(tds[13].text)
 
         table.append(player_dict)
+        writer.writerow(player_dict)
+        # print table
+    csvfile.close()
     return table
 
 
@@ -104,6 +120,7 @@ def main():
     all_urls = generate_all_urls(season, week, n_pages)
     all_tables = []
     for url in all_urls:
+        print url
         soup = get_source(url)
         table = get_data_from_source(soup, season, week)
         all_tables = all_tables + table
