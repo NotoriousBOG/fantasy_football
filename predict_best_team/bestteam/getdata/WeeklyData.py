@@ -111,52 +111,61 @@ def get_data_from_source(source, season, week):
 
         player_dict['season'] = season
         player_dict['week'] = week
-
-        opponent_text = tds[2].text
-        if "@" in opponent_text:
-            player_dict['opponent'] = opponent_text[1:]
-            player_dict['at_home'] = 0
-        else:
-            player_dict['opponent'] = opponent_text
+        
+        
+        if tds[2].text == "** BYE **":
+            player_dict['won_game'] = 2
+            player_dict['team_score'] = 0
+            player_dict['opponent_score'] = 0
+            player_dict['opponent'] = "NA"
             player_dict['at_home'] = 1
-
-        status_text = tds[3].text
-        won_loss_score = status_text.split(" ")
-        won_loss = won_loss_score[0].strip()
-        if won_loss == "W":
-            player_dict['won_game'] = 1
-        else:
-            player_dict['won_game'] = 0
-        scores = won_loss_score[1].split("-")
-        player_dict['team_score'] = int(scores[0].strip())
-        player_dict['opponent_score'] = int(scores[1].strip())
+            start_index = 3
+        else: 
+            start_index = 4
+            opponent_text = tds[2].text
+            if "@" in opponent_text:
+                player_dict['opponent'] = opponent_text[1:]
+                player_dict['at_home'] = 0
+            else:
+                player_dict['opponent'] = opponent_text
+                player_dict['at_home'] = 1
+            status_text = tds[3].text
+            won_loss_score = status_text.split(" ")
+            won_loss = won_loss_score[0].strip()
+            if won_loss == "W":
+                player_dict['won_game'] = 1
+            else:
+                player_dict['won_game'] = 0
+            scores = won_loss_score[1].split("-")
+            player_dict['team_score'] = int(scores[0].strip())
+            player_dict['opponent_score'] = int(scores[1].strip())
 
 
         # passing
-        cmp_atmp = tds[5].text.split("/")
+        cmp_atmp = tds[start_index+1].text.split("/")
         player_dict['passing_completed'] = int(cmp_atmp[0])
         player_dict['passing_attempted'] = int(cmp_atmp[1])
-        player_dict['passing_yds'] = int(tds[6].text)
-        player_dict['passing_td'] = int(tds[7].text)
-        player_dict['passing_int'] = int(tds[8].text)
+        player_dict['passing_yds'] = int(tds[start_index+2].text)
+        player_dict['passing_td'] = int(tds[start_index+3].text)
+        player_dict['passing_int'] = int(tds[start_index+4].text)
 
         # rushing)
-        player_dict['rushing_attempts'] = int(tds[10].text)
-        player_dict['rushing_yds'] = int(tds[11].text)
-        player_dict['rushing_td'] = int(tds[12].text)
+        player_dict['rushing_attempts'] = int(tds[start_index+6].text)
+        player_dict['rushing_yds'] = int(tds[start_index+7].text)
+        player_dict['rushing_td'] = int(tds[start_index+8].text)
 
         # receiving)
-        player_dict['receiving_receptions'] = int(tds[14].text)
-        player_dict['receiving_yds'] = int(tds[15].text)
-        player_dict['receiving_td'] = int(tds[16].text)
-        player_dict['receiving_targets'] = int(tds[17].text)
+        player_dict['receiving_receptions'] = int(tds[start_index+10].text)
+        player_dict['receiving_yds'] = int(tds[start_index+11].text)
+        player_dict['receiving_td'] = int(tds[start_index+12].text)
+        player_dict['receiving_targets'] = int(tds[start_index+13].text)
 
         # misc)
-        player_dict['two_point_conv'] = int(tds[19].text)
-        player_dict['fumbles'] = int(tds[20].text)
-        player_dict['total_returned_tds'] = int(tds[21].text)
+        player_dict['two_point_conv'] = int(tds[start_index+15].text)
+        player_dict['fumbles'] = int(tds[start_index+16].text)
+        player_dict['total_returned_tds'] = int(tds[start_index+17].text)
 
-        player_dict['total_points'] = int(tds[23].text)
+        player_dict['total_points'] = int(tds[start_index+19].text)
 
         table.append(player_dict)
         writer.writerow(player_dict)
