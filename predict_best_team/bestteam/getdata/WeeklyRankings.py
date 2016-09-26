@@ -1,5 +1,6 @@
-# python WeeklyData.py YYYY W P; where YYYY is the year, W is the Week, and P is the number of Pages to pull.
-# Pulls from https://www.fantasypros.com/nfl/rankings/qb.php
+# python WeeklyRankings.py YYYY W; where YYYY is the year, W is the Week
+# Pulls from https://www.fantasypros.com/nfl/rankings/qb.php$week=1
+#
 from bs4 import BeautifulSoup
 import urllib2
 import numpy as np
@@ -69,7 +70,7 @@ def generate_all_urls(week):
     position_dict = {'1': 'qb', '2': 'rb', '3': 'wr', '4': 'te', '5': 'dst'}
     all_urls = []
     for key, value in position_dict.iteritems():
-        all_urls.append("https://www.fantasypros.com/nfl/rankings/{0}.php?week={1}".format(key,week))
+        all_urls.append("https://www.fantasypros.com/nfl/rankings/{0}.php?week={1}".format(value,week))
     return all_urls
 
 
@@ -95,83 +96,43 @@ def get_data_from_source(source, season, week):
 #                 'two_point_conv','fumbles','total_returned_tds','total_points']
 #    writer = csv.DictWriter(csvfile, fieldnames=fieldnames, extrasaction='ignore')
     #writer.writeheader()  #because of the append method, currently it is written for every page it downloads
-    for tr in source.find_all('tr')[3:]: # looking for rows in a table; probably skipping to the third row; source is probably something returned from BeautifulSoup
-        tds = tr.find_all('td') # finds individual cells and adds them to some list or array
 
+    
+    for tr in source.find_all('tr')[1:]: # looking for rows in a table; probably skipping to the 1st row; source is probably something returned from BeautifulSoup
+        tds = tr.find_all('td') # finds individual cells and adds them to some list or array
+        length_tds = len(tds)
+     
+        if length_tds != 7:     # tds should have 7 columns for each row. For some reason the last row is not 7 and doesn't contain any relevant data so ignore it
+            #print length_tds
+            break
+        
         player_dict = {}    # starting a blank dictionary
         try:
-            player_info = tds[0].text.split(",")
-            player_dict['name'] = player_info[0]
-            player_dict['team'] = player_info[1].split(u'\xa0')[0].strip()
-            player_dict['position'] = player_info[1].split(u'\xa0')[1].strip()
+            player_info = tds[1].text.split(" ")
+            player_dict['name'] = player_info[1].strip()
+            #player_dict['team'] = player_info[1].split(u'\xa0')[0].strip()
+            #player_dict['position'] = position
         except:
-            player_info = tds[0].text.split(" ")
-            player_dict['name'] = player_info[0]
-            player_dict['team'] = player_info[0]
-            player_dict['position'] = "D"
+            player_info = tds[1].text.split(" ")
+            player_dict['name'] = player_info[1]
+            player_dict['team'] = player_info[1]
+            #player_dict['position'] = "D"
 
         player_dict['season'] = season
         player_dict['week'] = week
         
-        
-        if tds[2].text == "** BYE **":
-            player_dict['won_game'] = 2
-            player_dict['team_score'] = 0
-            player_dict['opponent_score'] = 0
-            player_dict['opponent'] = "NA"
-            player_dict['at_home'] = 1
-            start_index = 3
-        else: 
-            start_index = 4
-            opponent_text = tds[2].text
-            if "@" in opponent_text:
-                player_dict['opponent'] = opponent_text[1:]
-                player_dict['at_home'] = 0
-            else:
-                player_dict['opponent'] = opponent_text
-                player_dict['at_home'] = 1
-            status_text = tds[3].text
-            won_loss_score = status_text.split(" ")
-            won_loss = won_loss_score[0].strip()
-            if won_loss == "W":
-                player_dict['won_game'] = 1
-            else:
-                player_dict['won_game'] = 0
-            scores = won_loss_score[1].split("-")
-            player_dict['team_score'] = int(scores[0].strip())
-            player_dict['opponent_score'] = int(scores[1].strip())
-
-
-        # passing
-        cmp_atmp = tds[start_index+1].text.split("/")
-        player_dict['passing_completed'] = int(cmp_atmp[0])
-        player_dict['passing_attempted'] = int(cmp_atmp[1])
-        player_dict['passing_yds'] = int(tds[start_index+2].text)
-        player_dict['passing_td'] = int(tds[start_index+3].text)
-        player_dict['passing_int'] = int(tds[start_index+4].text)
-
-        # rushing)
-        player_dict['rushing_attempts'] = int(tds[start_index+6].text)
-        player_dict['rushing_yds'] = int(tds[start_index+7].text)
-        player_dict['rushing_td'] = int(tds[start_index+8].text)
-
-        # receiving)
-        player_dict['receiving_receptions'] = int(tds[start_index+10].text)
-        player_dict['receiving_yds'] = int(tds[start_index+11].text)
-        player_dict['receiving_td'] = int(tds[start_index+12].text)
-        player_dict['receiving_targets'] = int(tds[start_index+13].text)
-
-        # misc)
-        player_dict['two_point_conv'] = int(tds[start_index+15].text)
-        player_dict['fumbles'] = int(tds[start_index+16].text)
-        player_dict['total_returned_tds'] = int(tds[start_index+17].text)
-
-        player_dict['total_points'] = int(tds[start_index+19].text)
+        # Ranks
+        player_dict['rank'] = int(tds[0].text)
+        player_dict['best'] = int(tds[3].text)
+        player_dict['worst'] = int(tds[4].text)
+        player_dict['rank_avg'] = float(tds[5].text)
+        player_dict['rank_stdv'] = float(tds[6].text)
+     
 
         table.append(player_dict)
-        writer.writerow(player_dict)
-        # print table
-    csvfile.close()
+        #writer.writerow(player_dict)
+        #print table
+    #csvfile.close()
     return table
 
 
