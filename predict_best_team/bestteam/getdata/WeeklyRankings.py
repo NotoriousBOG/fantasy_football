@@ -67,7 +67,7 @@ def get_source(url):
 
 
 def generate_all_urls(week):
-    position_dict = {'1': 'qb', '2': 'rb', '3': 'wr', '4': 'te', '5': 'dst'}
+    position_dict = {'1': 'qb', '2': 'rb', '3': 'wr', '4': 'te'}
     all_urls = []
     for key, value in position_dict.iteritems():
         all_urls.append("https://www.fantasypros.com/nfl/rankings/{0}.php?week={1}".format(value,week))
@@ -109,14 +109,18 @@ def get_data_from_source(source, season, week):
         player_dict = {}    # starting a blank dictionary
         try:
             player_info = tds[1].text.split(" ")
-            player_dict['name'] = player_info[1].strip()
-            #player_dict['team'] = player_info[1].split(u'\xa0')[0].strip()
+            #print player_info
+            #print tds[1]
+            player_dict['name'] = player_info[0].strip() + ' ' + player_info[1].strip()
+            player_dict['team'] = player_info[2].strip()
             #player_dict['position'] = position
         except:
+            print 'exception'
             player_info = tds[1].text.split(" ")
             player_dict['name'] = player_info[1]
             player_dict['team'] = player_info[1]
             #player_dict['position'] = "D"
+
 
         player_dict['season'] = season
         player_dict['week'] = week
