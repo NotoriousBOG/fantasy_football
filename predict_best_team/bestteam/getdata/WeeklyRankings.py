@@ -27,11 +27,11 @@ def write_to_db(data):
 
         cur.execute(insert_statement, (AsIs(','.join(columns)), tuple(values)))
 
-    cur.execute("""DELETE FROM scoring_leaders_weekly a
+    cur.execute("""DELETE FROM weekly_rankings a
                     WHERE a.ctid <> (SELECT min(b.ctid)
-                        FROM scoring_leaders_weekly b
+                        FROM weekly_rankings b
                         WHERE (a.name = b.name and a.team = b.team
-                        and a.position = b.position and a.season = b.season
+                        and a.season = b.season
                         and a.week = b.week));""")
     conn.commit()
 
