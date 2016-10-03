@@ -1,5 +1,5 @@
 # python WeeklyRankings.py YYYY W; where YYYY is the year, W is the Week
-# Pulls from https://www.fantasypros.com/nfl/rankings/qb.php$week=1
+# Pulls from https://www.fantasypros.com/nfl/rankings/qb.php?week=1
 #
 from bs4 import BeautifulSoup
 import urllib2
@@ -97,28 +97,37 @@ def get_data_from_source(source, season, week):
 #    writer = csv.DictWriter(csvfile, fieldnames=fieldnames, extrasaction='ignore')
     #writer.writeheader()  #because of the append method, currently it is written for every page it downloads
 
+    teams = ['Ari','Atl','Bal','Buf','Car','Chi','Cin','Cle','Dal','Den','Det','GB','Hou','Ind','Jax','KC','LA','Mia','Min','NE','NO','NYG','NYJ','Oak','Phi','Pit','SD','Sea','SF','TB','Ten','Wsh']
     
     for tr in source.find_all('tr')[1:]: # looking for rows in a table; probably skipping to the 1st row; source is probably something returned from BeautifulSoup
+        
         tds = tr.find_all('td') # finds individual cells and adds them to some list or array
         length_tds = len(tds)
      
         if length_tds != 7:     # tds should have 7 columns for each row. For some reason the last row is not 7 and doesn't contain any relevant data so ignore it
-            #print length_tds
-            break
+            print length_tds
+            next(tr)
+            return next(tr)
+        print length_tds
+            #break
         
         player_dict = {}    # starting a blank dictionary
         try:
             player_info = tds[1].text.split(" ")
             #print player_info
-            #print tds[1]
-            player_dict['name'] = player_info[0].strip() + ' ' + player_info[1].strip()
-            player_dict['team'] = player_info[2].strip()
-            #player_dict['position'] = position
+            l = len(player_info)
+                   
+            if any(player_info[3]==x for x in teams)==True:
+                player_dict['name'] = player_info[0].strip() + ' ' + player_info[1].strip() + ' ' +player_info[2]
+                player_dict['team'] = player_info[3]
+            else:
+                player_dict['team'] = player_info[2].strip()
+                player_dict['name'] = player_info[0].strip() + ' ' + player_info[1].strip()
         except:
             print 'exception'
-            player_info = tds[1].text.split(" ")
-            player_dict['name'] = player_info[1]
-            player_dict['team'] = player_info[1]
+            #player_info = tds[1].text.split(" ")
+            #player_dict['name'] = player_info[1]
+            #player_dict['team'] = player_info[1]
             #player_dict['position'] = "D"
 
 
