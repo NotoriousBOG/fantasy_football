@@ -98,51 +98,45 @@ def get_data_from_source(source, season, week):
     #writer.writeheader()  #because of the append method, currently it is written for every page it downloads
 
     teams = ['Ari','Atl','Bal','Buf','Car','Chi','Cin','Cle','Dal','Den','Det','GB','Hou','Ind','Jax','KC','LA','Mia','Min','NE','NO','NYG','NYJ','Oak','Phi','Pit','SD','Sea','SF','TB','Ten','Wsh']
-    
+
     for tr in source.find_all('tr')[1:]: # looking for rows in a table; probably skipping to the 1st row; source is probably something returned from BeautifulSoup
         
         tds = tr.find_all('td') # finds individual cells and adds them to some list or array
         length_tds = len(tds)
      
-        if length_tds != 7:     # tds should have 7 columns for each row. For some reason the last row is not 7 and doesn't contain any relevant data so ignore it
-            print length_tds
-            next(tr)
-            return next(tr)
-        print length_tds
-            #break
-        
-        player_dict = {}    # starting a blank dictionary
-        try:
-            player_info = tds[1].text.split(" ")
-            #print player_info
-            l = len(player_info)
-                   
-            if any(player_info[3]==x for x in teams)==True:
-                player_dict['name'] = player_info[0].strip() + ' ' + player_info[1].strip() + ' ' +player_info[2]
-                player_dict['team'] = player_info[3]
-            else:
-                player_dict['team'] = player_info[2].strip()
-                player_dict['name'] = player_info[0].strip() + ' ' + player_info[1].strip()
-        except:
-            print 'exception'
-            #player_info = tds[1].text.split(" ")
-            #player_dict['name'] = player_info[1]
-            #player_dict['team'] = player_info[1]
-            #player_dict['position'] = "D"
+        if length_tds == 7:     # tds should have 7 columns for each row. For some reason the last row is not 7 and doesn't contain any relevant data so ignore it
+            player_dict = {}    # starting a blank dictionary
+            try:
+                player_info = tds[1].text.split(" ")
+                       
+                if any(player_info[3]==x for x in teams)==True:     # check to see if the 4th position is a team instead of something else; If so then the players name is 
+                    player_dict['name'] = player_info[0].strip() + ' ' + player_info[1].strip() + ' ' +player_info[2]
+                    player_dict['team'] = player_info[3]
+                else:
+                    player_dict['team'] = player_info[2].strip()
+                    player_dict['name'] = player_info[0].strip() + ' ' + player_info[1].strip()
+            except:
+                print 'exception'
+                #player_info = tds[1].text.split(" ")
+                #player_dict['name'] = player_info[1]
+                #player_dict['team'] = player_info[1]
+                #player_dict['position'] = "D"
+    
+    
+            player_dict['season'] = season
+            player_dict['week'] = week
+            
+            # Ranks
+            player_dict['rank'] = int(tds[0].text)
+            player_dict['best'] = int(tds[3].text)
+            player_dict['worst'] = int(tds[4].text)
+            player_dict['rank_avg'] = float(tds[5].text)
+            player_dict['rank_stdv'] = float(tds[6].text)
+             
+            table.append(player_dict)
+        else:
+            continue        # if the length of the row is not 7 then just ignore it and continue to the next iteration
 
-
-        player_dict['season'] = season
-        player_dict['week'] = week
-        
-        # Ranks
-        player_dict['rank'] = int(tds[0].text)
-        player_dict['best'] = int(tds[3].text)
-        player_dict['worst'] = int(tds[4].text)
-        player_dict['rank_avg'] = float(tds[5].text)
-        player_dict['rank_stdv'] = float(tds[6].text)
-     
-
-        table.append(player_dict)
         #writer.writerow(player_dict)
         #print table
     #csvfile.close()

@@ -67,7 +67,7 @@ def get_data_from_source(source, season, week):
         player_dict = {}
         try:
             player_info = tds[0].text.split(",")
-            player_dict['name'] = player_info[0]
+            player_dict['name'] = player_info[0].split("*")[0]
             player_dict['team'] = player_info[1].split(u'\xa0')[0].strip()
             player_dict['position'] = player_info[1].split(u'\xa0')[1].strip()
         except:
